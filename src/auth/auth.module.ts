@@ -9,6 +9,8 @@ import {
 } from './schemas/refresh-tokken.schema';
 import { ResetToken, ResetTokenSchema } from './schemas/reset-tokken.schema';
 import { MailService } from 'src/Services/mail.service';
+import { RolesModule } from 'src/roles/roles.module';
+import { RolesService } from 'src/roles/roles.service';
 
 @Module({
   imports: [
@@ -17,8 +19,10 @@ import { MailService } from 'src/Services/mail.service';
       { name: RefrechToken.name, schema: RefrechTokenSchema },
       { name: ResetToken.name, schema: ResetTokenSchema },
     ]),
+    RolesModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, MailService],
+  exports: [AuthService],
 })
 export class AuthModule {}

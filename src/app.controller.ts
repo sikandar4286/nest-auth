@@ -1,6 +1,10 @@
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
-import { AuthGuard } from './guards/auth.guard';
+import { AuthenticationGuard } from './guards/authentication.guard';
+import { Permissions } from './decorators/permissions.decorator';
+import { Action } from './roles/enums/action.enum';
+import { Resource } from './roles/enums/resource.enum';
+import { AuthorizationGuard } from './guards/authorization.guard';
 
 @Controller()
 export class AppController {
@@ -11,8 +15,9 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @UseGuards(AuthGuard)
   @Get('secure-route')
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
+  @Permissions([{ resource: Resource.SecureRoute, actions: [Action.Read] }])
   secureRoute(@Req() req): string {
     return this.appService.secureRoute(req);
   }

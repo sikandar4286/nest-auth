@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { nanoid } from 'nanoid';
 import { ResetToken } from './schemas/reset-tokken.schema';
 import { MailService } from 'src/Services/mail.service';
+import { RolesService } from 'src/roles/roles.service';
 
 @Injectable()
 export class AuthService {
@@ -26,6 +27,7 @@ export class AuthService {
     private readonly resetTokenModel: Model<ResetToken>,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
+    private readonly rolesService: RolesService,
   ) {}
 
   async signup(signupData: SignupDto) {
@@ -209,5 +211,19 @@ export class AuthService {
     return {
       message: 'Password reset successfully',
     };
+  }
+
+  async getUserPermissions(userId: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const role = await this.rolesService.getRoleById(user.roleId.toString());
+    if (!role) {
+      throw new UnauthorizedException('Role not found');
+    }
+
+    return role.permissions;
   }
 }
