@@ -1,0 +1,39 @@
+# Tutorial 1
+
+How to Set Up PostgreSQL and pgAdmin with Docker: Step-by-Step Tutorial
+https://www.youtube.com/watch?v=7uXbWTLIHJo
+
+Step 1: Pull PostgreSQL Image
+docker pull postgres
+
+Step 2: Run PostgreSQL Container
+docker run --name pg-tutorial -e POSTGRES_PASSWORD=mysecurepassword -p 5432:5432 -d postgres
+
+note: By default, the username is always postgres unless you override it with POSTGRES_USER like below
+docker run --name pg-tutorial -e POSTGRES_PASSWORD=mysecurepassword -e POSTGRES_USER=postgres -p 5432:5432 -d postgres
+
+Step 3: Verify PostgreSQL Container is Running
+docker ps
+
+Step 4: Pull pgAdmin 4 Image
+docker pull dpage/pgadmin4
+
+Step 5: Run pgAdmin 4 Container
+docker run --name pgadmin-tutorial -p 5050:80 -e PGADMIN_DEFAULT_EMAIL=admin@example.com -e PGADMIN_DEFAULT_PASSWORD=securepass -d dpage/pgadmin4
+
+Step 6: Find PostgreSQL Container IP Address
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' pg-tutorial
+
+Step 7: Connect to PostgreSQL via Terminal
+docker exec -it pg-tutorial psql -U postgres
+
+Step 8: Switch to a Specific Database
+\c my_database
+
+Step 9: Query a Table in PostgreSQL
+SELECT \* FROM users;
+
+# Tutorial 2
+
+Run Postgres in a Docker Container (Easiest PostgreSQL Setup)
+https://www.youtube.com/watch?v=Hs9Fh1fr5s8

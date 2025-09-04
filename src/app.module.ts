@@ -7,6 +7,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { RolesModule } from './roles/roles.module';
 import configuration from './config/configuration';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { DesModule } from './des/des.module';
 
 @Module({
   imports: [
@@ -34,8 +36,25 @@ import configuration from './config/configuration';
       inject: [ConfigService],
     }),
 
+    // TypeOrmModule.forRootAsync({
+    //   imports: [ConfigModule],
+    //   useFactory: async (configService) => ({
+    //     type: 'postgres',
+    //     host: configService.get('postgres.host'),
+    //     port: configService.get('postgres.port'),
+    //     username: configService.get('postgres.username'),
+    //     password: configService.get('postgres.password'),
+    //     database: configService.get('postgres.database'),
+    //     entities: [__dirname + '/**/*.entity{.ts,.js}'],
+    //     synchronize: true,
+    //     autoLoadEntities: true,
+    //   }),
+    //   inject: [ConfigService],
+    // }),
+
     AuthModule,
     RolesModule,
+    DesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
