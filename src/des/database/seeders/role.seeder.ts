@@ -8,7 +8,10 @@ export async function RoleSeeder(dataSource: DataSource) {
   const count = await roleRepository.count();
   if (count > 0) return console.log('⚠️ Roles already seeded, skipping.');
 
-  const roles = roleRepository.create([{ name: 'Admin' }, { name: 'User' }]);
+  const roles = roleRepository.create([
+    { name: 'Admin', slug: 'admin' },
+    { name: 'User', slug: 'user' },
+  ]);
 
   await roleRepository.save(roles);
   console.log('✅ Roles seeded!');

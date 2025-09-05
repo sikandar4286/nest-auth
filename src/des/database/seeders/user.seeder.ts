@@ -15,6 +15,7 @@ export async function UserSeeder(dataSource: DataSource) {
     email: 'admin@example.com',
     password_hash: await bcrypt.hash('password123', 10),
     is_active: true,
+    is_admin: true,
   });
 
   await userRepository.save(admin);
