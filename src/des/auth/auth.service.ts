@@ -17,6 +17,13 @@ import { MailService } from '../services/mail.service';
 import { ResetPasswordDto } from './dto/resetPassword.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { plainToInstance } from 'class-transformer';
+import { Role } from './entities/role.entity';
+import { RolesDto, UserRolesDto } from './dto/role.dto';
+import { PermissionsDto } from './dto/permission.dto';
+import { Permission } from './entities/permission.entity';
+import { RolePermissionDto } from './dto/role-permission.dto';
+import { RolePermission } from './entities/role-permission.entity';
+import { UserRole } from './entities/user-role.entity';
 
 @Injectable()
 export class AuthService {
@@ -25,6 +32,14 @@ export class AuthService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Token)
     private readonly tokenRepository: Repository<Token>,
+    @InjectRepository(Role)
+    private readonly roleRepository: Repository<Role>,
+    @InjectRepository(Permission)
+    private readonly permissionRepository: Repository<Permission>,
+    @InjectRepository(RolePermission)
+    private readonly rolePermissionRepository: Repository<RolePermission>,
+    @InjectRepository(UserRole)
+    private readonly userRoleRepository: Repository<UserRole>,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
   ) {}
@@ -74,8 +89,6 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
-    // const { password_hash, created_at, updated_at, ...rest } = userData;
 
     const { accessToken, refreshToken } = await this.generateToken(userData.id);
 
@@ -221,5 +234,96 @@ export class AuthService {
     return this.tokenRepository.findOne({
       where: { userId, type: TokenType.REFRESH },
     });
+  }
+
+  async createRoles(rolesData: RolesDto) {
+    const roles = this.roleRepository.create(rolesData.roles);
+
+    await this.roleRepository.save(roles);
+
+    return {
+      message: 'Roles created successfully',
+      roles,
+    };
+  }
+
+  async createPermissions(permissionsData: PermissionsDto) {
+    const permissions = this.permissionRepository.create(
+      permissionsData.permissions,
+    );
+
+    await this.permissionRepository.save(permissions);
+
+    return {
+      message: 'Permissions created successfully',
+      permissions,
+    };
+  }
+
+  async createRolePermission(data: RolePermissionDto) {
+    const permissions = this.rolePermissionRepository.create(data);
+
+    await this.rolePermissionRepository.save(permissions);
+
+    return {
+      message: 'Role permission created successfully',
+      permissions,
+    };
+  }
+
+  async createUserRoles(data: UserRolesDto) {
+    const userRoles = this.userRoleRepository.create(data.userRoles);
+
+    await this.userRoleRepository.save(userRoles);
+
+    return {
+      message: 'User roles created successfully',
+      userRoles,
+    };
+  }
+
+  async getUsers() {
+    // const users = await this.userRepository.find({
+    //   relations: [
+    //     'userRoles',
+    //     'userRoles.role',
+    //     'userRoles.role.rolePermissions',
+    //     'userRoles.role.rolePermissions.permission',
+    //     'userPermissions',
+    //     'userPermissions.permission',
+    //   ],
+    // });
+
+    const users = await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.userRoles', 'userRole')
+      .leftJoinAndSelect('userRole.role', 'role')
+      .leftJoinAndSelect('role.rolePermissions', 'rolePermission')
+      .leftJoinAndSelect('rolePermission.permission', 'permission')
+      .leftJoinAndSelect('user.userPermissions', 'userPermission')
+      .leftJoinAndSelect('userPermission.permission', 'directPermission')
+      .getMany();
+
+    return {
+      users,
+    };
+  }
+
+  async getUser(id: string) {
+    const user = await this.userRepository.findOne({
+      where: { id: Number(id) },
+      relations: [
+        'userRoles',
+        'userRoles.role',
+        'userRoles.role.rolePermissions',
+        'userRoles.role.rolePermissions.permission',
+        'userPermissions',
+        'userPermissions.permission',
+      ],
+    });
+
+    return {
+      user,
+    };
   }
 }

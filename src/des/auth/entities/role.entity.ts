@@ -20,7 +20,7 @@ export class Role {
   @Column()
   name: string;
 
-  @Column({ nullable: true })
+  @Column({ default: '', nullable: true })
   description: string;
 
   @CreateDateColumn()

@@ -17,7 +17,7 @@ export class Permission {
   @Column({ unique: true })
   slug: string; // e.g., post.create
 
-  @Column({ nullable: true })
+  @Column({ default: '', nullable: true })
   description: string;
 
   @CreateDateColumn()
