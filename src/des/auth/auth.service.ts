@@ -15,6 +15,8 @@ import { SigninDto } from './dto/signin.dto';
 import { ChangePasswordDto } from 'src/auth/dtos/ChangePassword.dto';
 import { MailService } from '../services/mail.service';
 import { ResetPasswordDto } from './dto/resetPassword.dto';
+import { UserResponseDto } from './dto/user-response.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class AuthService {
@@ -73,12 +75,15 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const { password_hash, created_at, updated_at, ...rest } = userData;
+    // const { password_hash, created_at, updated_at, ...rest } = userData;
 
     const { accessToken, refreshToken } = await this.generateToken(userData.id);
 
     return {
-      user: rest,
+      user: plainToInstance(UserResponseDto, userData, {
+        excludeExtraneousValues: true,
+        groups: [userData.is_admin ? 'admin' : 'user'],
+      }),
       accessToken,
       refreshToken,
     };

@@ -29,6 +29,10 @@ const ROUTES = [
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
         autoLoadEntities: true,
+
+        // synchronize: process.env.NODE_ENV !== 'production',
+        // migrationsRun: process.env.NODE_ENV === 'production',
+        // migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
       }),
       inject: [ConfigService],
     }),

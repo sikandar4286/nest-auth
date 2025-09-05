@@ -26,6 +26,9 @@ export class User {
   @Column({ default: true })
   is_active: boolean;
 
+  @Column({ default: false })
+  is_admin: boolean;
+
   @Column({ type: 'jsonb', nullable: true })
   meta: Record<string, any>;
 
