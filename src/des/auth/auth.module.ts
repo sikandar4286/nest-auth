@@ -9,6 +9,7 @@ import { Role } from './entities/role.entity';
 import { Permission } from './entities/permission.entity';
 import { RolePermission } from './entities/role-permission.entity';
 import { UserRole } from './entities/user-role.entity';
+import { UserPermission } from './entities/user-permission.entity';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { UserRole } from './entities/user-role.entity';
       Permission,
       RolePermission,
       UserRole,
+      UserPermission,
     ]),
   ],
   controllers: [AuthController],

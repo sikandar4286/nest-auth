@@ -23,7 +23,8 @@ import { PermissionsDto } from './dto/permission.dto';
 import { Permission } from './entities/permission.entity';
 import { RolePermissionDto } from './dto/role-permission.dto';
 import { RolePermission } from './entities/role-permission.entity';
-import { UserRole } from './entities/user-role.entity';
+import { UserRole } from '@/des/auth/entities/user-role.entity';
+import { UserPermission } from './entities/user-permission.entity';
 
 @Injectable()
 export class AuthService {
@@ -40,6 +41,8 @@ export class AuthService {
     private readonly rolePermissionRepository: Repository<RolePermission>,
     @InjectRepository(UserRole)
     private readonly userRoleRepository: Repository<UserRole>,
+    @InjectRepository(UserPermission)
+    private readonly userPermissionRepository: Repository<UserPermission>,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
   ) {}
@@ -324,6 +327,131 @@ export class AuthService {
 
     return {
       user,
+    };
+  }
+
+  async getUserMe(id: string) {
+    const userId = Number(id);
+
+    if (!userId) {
+      throw new BadRequestException('Invalid user ID');
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      select: [
+        'id',
+        'username',
+        'email',
+        'is_admin',
+        'is_active',
+        'meta',
+        'created_at',
+        'updated_at',
+      ],
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    if (user.is_admin) {
+      return {
+        user: { ...user, is_admin: true },
+        roles: [],
+        permissions: [],
+        user_permissions: [],
+      };
+    }
+
+    // Step 1: Get user roles only (no permissions to avoid join explosion)
+    const userRoles = await this.userRoleRepository
+      .createQueryBuilder('ur')
+      .leftJoinAndSelect('ur.role', 'role')
+      .where('ur.user_id = :userId', { userId })
+      .getMany();
+
+    // Step 2: Check for admin role
+    const isAdminRole = userRoles.some(
+      (ur) =>
+        ur.role?.slug?.toLowerCase() === 'admin' ||
+        ur.role?.name?.toLowerCase() === 'admin',
+    );
+
+    if (isAdminRole) {
+      return {
+        user: { ...user, is_admin: true },
+        roles: [],
+        permissions: [],
+        user_permissions: [],
+      };
+    }
+
+    // Step 3: Get role permissions separately (avoiding join explosion)
+    const roleIds = userRoles.map((ur) => ur.role.id);
+    const rolePermissions =
+      roleIds.length > 0
+        ? await this.rolePermissionRepository
+            .createQueryBuilder('rp')
+            .leftJoinAndSelect('rp.permission', 'permission')
+            .where('rp.role_id IN (:...roleIds)', { roleIds })
+            .getMany()
+        : [];
+
+    // Step 4: Get user permissions
+    const userPerms = await this.userPermissionRepository
+      .createQueryBuilder('up')
+      .leftJoinAndSelect('up.permission', 'permission')
+      .where('up.user_id = :userId', { userId })
+      .andWhere('up.granted = :granted', { granted: true })
+      .getMany();
+
+    const userPermissions = userPerms.map((up) => ({
+      id: up.permission.id,
+      slug: up.permission.slug,
+      description: up.permission.description,
+      granted: up.granted,
+      created_at: up.created_at,
+    }));
+
+    // Step 5: Build role-permission mapping
+    const rolePermissionMap = new Map<
+      number,
+      Array<{ id: number; slug: string; description: string }>
+    >();
+
+    rolePermissions.forEach((rp) => {
+      if (!rolePermissionMap.has(rp.role_id)) {
+        rolePermissionMap.set(rp.role_id, []);
+      }
+      rolePermissionMap.get(rp.role_id)!.push({
+        id: rp.permission.id,
+        slug: rp.permission.slug,
+        description: rp.permission.description,
+      });
+    });
+
+    // Step 6: Format response
+    const roles = userRoles.map((ur) => ({
+      id: ur.role.id,
+      slug: ur.role.slug,
+      name: ur.role.name,
+      description: ur.role.description,
+      granted_at: ur.granted_at,
+      permissions: rolePermissionMap.get(ur.role.id) || [],
+    }));
+
+    const permissions = rolePermissions.map((rp) => ({
+      id: rp.permission.id,
+      slug: rp.permission.slug,
+      description: rp.permission.description,
+    }));
+
+    return {
+      user: { ...user, is_admin: isAdminRole },
+      roles,
+      permissions,
+      user_permissions: userPermissions,
     };
   }
 }

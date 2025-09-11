@@ -89,4 +89,10 @@ export class AuthController {
   getUser(@Param('id') id: string) {
     return this.authService.getUser(id);
   }
+
+  @UseGuards(AuthenticationGuard)
+  @Get('user-me')
+  getUserMe(@Req() req) {
+    return this.authService.getUserMe(req.userId);
+  }
 }
