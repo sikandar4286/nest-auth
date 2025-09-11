@@ -9,6 +9,7 @@ import { RolesModule } from './roles/roles.module';
 import configuration from './config/configuration';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DesModule } from './des/des.module';
+import { AppRoutingModule } from './app.routing.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { DesModule } from './des/des.module';
     AuthModule,
     RolesModule,
     DesModule,
+    AppRoutingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

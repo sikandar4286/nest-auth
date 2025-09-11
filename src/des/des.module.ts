@@ -4,14 +4,6 @@ import { DesController } from './des.controller';
 import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { RouterModule } from '@nestjs/core';
-
-const ROUTES = [
-  {
-    path: 'des',
-    module: AuthModule,
-  },
-];
 
 @Module({
   controllers: [DesController],
@@ -39,7 +31,6 @@ const ROUTES = [
     }),
 
     AuthModule,
-    RouterModule.register(ROUTES),
   ],
 })
 export class DesModule {}
