@@ -25,6 +25,7 @@ import { RolePermissionDto } from './dto/role-permission.dto';
 import { RolePermission } from './entities/role-permission.entity';
 import { UserRole } from '@/des/auth/entities/user-role.entity';
 import { UserPermission } from './entities/user-permission.entity';
+import { InvalidCredentialException } from '../exceptions/invalid-credential.exception';
 
 @Injectable()
 export class AuthService {
@@ -81,7 +82,8 @@ export class AuthService {
     const userData = await this.userRepository.findOne({ where: { email } });
 
     if (!userData) {
-      throw new UnauthorizedException('Invalid credentials');
+      // throw new UnauthorizedException('Invalid credentials');
+      throw new InvalidCredentialException();
     }
 
     const isPasswordValid = await bcrypt.compare(

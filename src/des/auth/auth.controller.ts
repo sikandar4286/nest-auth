@@ -18,6 +18,8 @@ import { ResetPasswordDto } from './dto/resetPassword.dto';
 import { RolesDto, UserRolesDto } from './dto/role.dto';
 import { PermissionsDto } from './dto/permission.dto';
 import { RolePermissionDto } from './dto/role-permission.dto';
+import { Permissions, Roles } from '../decorators/role-permission.decorator';
+import { AuthorizationGuard } from '../guards/authorization.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -90,7 +92,9 @@ export class AuthController {
     return this.authService.getUser(id);
   }
 
-  @UseGuards(AuthenticationGuard)
+  @Roles(['admin', 'manager'])
+  @Permissions(['view-users'])
+  @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @Get('user-me')
   getUserMe(@Req() req) {
     return this.authService.getUserMe(req.userId);
