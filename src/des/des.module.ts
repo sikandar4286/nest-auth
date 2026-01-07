@@ -4,6 +4,9 @@ import { DesController } from './des.controller';
 import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { RbacModule } from './rbac/rbac.module';
+import { CacheModule } from '@nestjs/cache-manager';
+import KeyvRedis from '@keyv/redis';
 
 @Module({
   controllers: [DesController],
@@ -30,7 +33,22 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       inject: [ConfigService],
     }),
 
+    CacheModule.registerAsync({
+      useFactory: async (configService) => {
+        return {
+          ttl: 30 * 1000,
+          stores: [
+            new KeyvRedis('redis://localhost:6379', {
+              namespace: 'my-redis-namespace',
+            }),
+          ],
+        };
+      },
+      inject: [ConfigService],
+    }),
+
     AuthModule,
+    RbacModule,
   ],
 })
 export class DesModule {}

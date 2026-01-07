@@ -26,6 +26,7 @@ import { RolePermission } from './entities/role-permission.entity';
 import { UserRole } from '@/des/auth/entities/user-role.entity';
 import { UserPermission } from './entities/user-permission.entity';
 import { InvalidCredentialException } from '../exceptions/invalid-credential.exception';
+import { RedisService } from '../services/redis.service';
 
 @Injectable()
 export class AuthService {
@@ -46,6 +47,7 @@ export class AuthService {
     private readonly userPermissionRepository: Repository<UserPermission>,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
+    private readonly redisService: RedisService,
   ) {}
 
   async signup(user: SignupDto) {
@@ -236,6 +238,11 @@ export class AuthService {
       ['userId', 'type'],
     );
 
+    // Cache refresh token in Redis for faster access
+    if (type === TokenType.REFRESH) {
+      await this.redisService.setRefreshToken(userId, hashToken, 259200); // 3 days
+    }
+
     return this.tokenRepository.findOne({
       where: { userId, type: TokenType.REFRESH },
     });
@@ -280,6 +287,12 @@ export class AuthService {
     const userRoles = this.userRoleRepository.create(data.userRoles);
 
     await this.userRoleRepository.save(userRoles);
+
+    // Clear cache for affected users
+    const affectedUserIds = [...new Set(userRoles.map(ur => ur.user_id))];
+    await Promise.all(
+      affectedUserIds.map(userId => this.redisService.clearUserCache(userId))
+    );
 
     return {
       message: 'User roles created successfully',
@@ -339,6 +352,12 @@ export class AuthService {
       throw new BadRequestException('Invalid user ID');
     }
 
+    // Try to get cached user data first
+    const cachedData = await this.redisService.getUserPermissions(userId);
+    if (cachedData) {
+      return cachedData;
+    }
+
     const user = await this.userRepository.findOne({
       where: { id: userId },
       select: [
@@ -358,12 +377,16 @@ export class AuthService {
     }
 
     if (user.is_admin) {
-      return {
+      const adminData = {
         user: { ...user, is_admin: true },
         roles: [],
         permissions: [],
         user_permissions: [],
       };
+
+      // Cache admin data for 1 hour
+      await this.redisService.setUserPermissions(userId, adminData, 3600);
+      return adminData;
     }
 
     // Step 1: Get user roles only (no permissions to avoid join explosion)
@@ -381,12 +404,16 @@ export class AuthService {
     );
 
     if (isAdminRole) {
-      return {
+      const adminRoleData = {
         user: { ...user, is_admin: true },
         roles: [],
         permissions: [],
         user_permissions: [],
       };
+
+      // Cache admin role data for 1 hour
+      await this.redisService.setUserPermissions(userId, adminRoleData, 3600);
+      return adminRoleData;
     }
 
     // Step 3: Get role permissions separately (avoiding join explosion)
@@ -449,11 +476,43 @@ export class AuthService {
       description: rp.permission.description,
     }));
 
-    return {
+    const result = {
       user: { ...user, is_admin: isAdminRole },
       roles,
       permissions,
       user_permissions: userPermissions,
+    };
+
+    // Cache the result for 30 minutes
+    await this.redisService.setUserPermissions(userId, result, 1800);
+
+    return result;
+  }
+
+  // New method: Logout with token blacklisting
+  async logout(userId: number, accessToken: string) {
+    // Blacklist the current access token
+    await this.redisService.blacklistToken(accessToken, 3600); // 1 hour TTL
+
+    // Clear all user cache
+    await this.redisService.clearUserCache(userId);
+
+    // Delete refresh token from database
+    await this.tokenRepository.delete({
+      userId,
+      type: TokenType.REFRESH,
+    });
+
+    return {
+      message: 'Logged out successfully',
+    };
+  }
+
+  // New method: Clear user cache (useful for admin operations)
+  async invalidateUserCache(userId: number) {
+    await this.redisService.clearUserCache(userId);
+    return {
+      message: 'User cache cleared successfully',
     };
   }
 }

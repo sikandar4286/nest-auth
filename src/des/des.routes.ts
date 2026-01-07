@@ -1,5 +1,6 @@
 import { AuthModule } from './auth/auth.module';
 import { DesModule } from './des.module';
+import { RbacModule } from './rbac/rbac.module';
 
 export const DES_ROUTES = [
   {
@@ -9,6 +10,10 @@ export const DES_ROUTES = [
       {
         path: '',
         module: AuthModule,
+      },
+      {
+        path: '',
+        module: RbacModule,
       },
     ],
   },

@@ -10,6 +10,10 @@ import { Permission } from './entities/permission.entity';
 import { RolePermission } from './entities/role-permission.entity';
 import { UserRole } from './entities/user-role.entity';
 import { UserPermission } from './entities/user-permission.entity';
+import { RedisService } from '../services/redis.service';
+import { CacheModule } from '@nestjs/cache-manager';
+import { ConfigService } from '@nestjs/config';
+import KeyvRedis from '@keyv/redis';
 
 @Module({
   imports: [
@@ -22,9 +26,22 @@ import { UserPermission } from './entities/user-permission.entity';
       UserRole,
       UserPermission,
     ]),
+    CacheModule.registerAsync({
+      useFactory: async (configService) => {
+        return {
+          ttl: 30 * 1000,
+          stores: [
+            new KeyvRedis('redis://localhost:6379', {
+              namespace: 'my-redis-namespace',
+            }),
+          ],
+        };
+      },
+      inject: [ConfigService],
+    }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, MailService],
-  exports: [AuthService],
+  providers: [AuthService, MailService, RedisService],
+  exports: [AuthService, RedisService],
 })
 export class AuthModule {}

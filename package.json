@@ -27,6 +27,8 @@
     "seed:des": "ts-node -r tsconfig-paths/register src/des/database/seed-runner.ts"
   },
   "dependencies": {
+    "@keyv/redis": "^5.1.2",
+    "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -38,6 +40,8 @@
     "@types/bcrypt": "^6.0.0",
     "@types/nodemailer": "^7.0.1",
     "bcrypt": "^6.0.0",
+    "cache-manager": "^7.2.0",
+    "cache-manager-redis-yet": "^5.1.5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "dotenv": "^17.2.1",

@@ -92,11 +92,23 @@ export class AuthController {
     return this.authService.getUser(id);
   }
 
-  @Roles(['admin', 'manager'])
-  @Permissions(['view-users'])
+  // @Roles(['admin', 'manager'])
+  // @Permissions(['view-users'])
   @UseGuards(AuthenticationGuard, AuthorizationGuard)
   @Get('user-me')
   getUserMe(@Req() req) {
     return this.authService.getUserMe(req.userId);
+  }
+
+  @UseGuards(AuthenticationGuard)
+  @Post('logout')
+  logout(@Req() req) {
+    return this.authService.logout(req.userId, req.token);
+  }
+
+  @UseGuards(AuthenticationGuard)
+  @Post('invalidate-cache/:userId')
+  invalidateUserCache(@Param('userId') userId: string) {
+    return this.authService.invalidateUserCache(Number(userId));
   }
 }

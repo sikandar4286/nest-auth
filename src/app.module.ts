@@ -10,6 +10,7 @@ import configuration from './config/configuration';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DesModule } from './des/des.module';
 import { AppRoutingModule } from './app.routing.module';
+import { MongoDbProjectModule } from './mongo-db-project/mongo-db-project.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { AppRoutingModule } from './app.routing.module';
     RolesModule,
     DesModule,
     AppRoutingModule,
+    MongoDbProjectModule,
   ],
   controllers: [AppController],
   providers: [AppService],
