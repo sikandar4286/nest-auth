@@ -96,3 +96,43 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+Recommended NestJS Structure
+
+src/
+├── modules/
+│ ├── users/
+│ │ ├── users.controller.ts
+│ │ ├── users.service.ts
+│ │ ├── users.module.ts
+│ │ ├── users.queries.ts # optional
+│ │ ├── dto/
+│ │ │ ├── create-user.dto.ts
+│ │ │ └── update-user.dto.ts
+│ │ ├── entities/
+│ │ │ └── user.entity.ts # TypeORM only
+│ │ └── interfaces/
+│ │ └── user.interface.ts
+│ │
+│ ├── auth/
+│ │ ├── auth.controller.ts
+│ │ ├── auth.service.ts
+│ │ ├── auth.module.ts
+│ │ └── strategies/
+│ │
+├── common/
+│ ├── decorators/
+│ ├── guards/
+│ ├── interceptors/
+│ ├── filters/
+│ └── pipes/
+│
+├── database/
+│ ├── prisma.service.ts # Prisma
+│ └── typeorm.config.ts # TypeORM
+│
+├── config/
+│ └── configuration.ts
+│
+├── app.module.ts
+└── main.ts
